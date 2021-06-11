@@ -31,13 +31,27 @@
 This repo was forked from https://github.com/triton-inference-server/client to run demo example and do further experiment
 Repo for experimenting NVIDIA Triton Inference server
 
-## Run image
-> sudo docker run --gpus=<num/all> --rm -p8000:8000 -p8001:8001 -p8002:8002 -v <(full-path-to)/model_repository>:/models nvcr.io/nvidia/tritonserver:21.05-py3 tritonserver --model-repository=/models
-
-## Ex: Run on vm with 'server' repo:
+## Prepare server with models
+Pull repo, image, and prepare models (Where <xx.yy> is the version of Triton that you want to use):
+```
+$ sudo docker pull nvcr.io/nvidia/tritonserver:<xx.yy>-py3
+$ git clone https://github.com/triton-inference-server/server.git
+$ cd docs/examples
+$ ./fetch_models.sh
+```
+## Run the server and client to infer (with server repo):
 1. Start the server side:
 ```
 $ sudo docker run --gpus all --rm -p8000:8000 -p8001:8001 -p8002:8002 -v /home/maverick911/repo/server/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:21.05-py3 tritonserver --model-repository=/models
+
++----------------------+---------+--------+
+| Model                | Version | Status |
++----------------------+---------+--------+
+| densenet_onnx        | 1       | READY  |
+....
+I0611 04:10:23.026207 1 grpc_server.cc:4062] Started GRPCInferenceService at 0.0.0.0:8001
+I0611 04:10:23.036976 1 http_server.cc:2887] Started HTTPService at 0.0.0.0:8000
+I0611 04:10:23.080860 1 http_server.cc:2906] Started Metrics Service at 0.0.0.0:8002
 ```
 2. Start client image to start inferencing (shell):
 ```
