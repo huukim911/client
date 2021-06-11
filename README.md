@@ -31,13 +31,14 @@
 This repo was forked from https://github.com/triton-inference-server/client to run demo example and do further experiment
 Repo for experimenting NVIDIA Triton Inference server
 
-## Prepare server with models
+## Prepare server with models, client with image
 Pull repo, image, and prepare models (Where <xx.yy> is the version of Triton that you want to use):
 ```
 $ sudo docker pull nvcr.io/nvidia/tritonserver:<xx.yy>-py3
 $ git clone https://github.com/triton-inference-server/server.git
 $ cd docs/examples
 $ ./fetch_models.sh
+$ git clone https://github.com/huukim911/triton-inference-server_client.git
 ```
 ## Run the server and client to infer (with server repo):
 1. Start the server side:
@@ -53,20 +54,136 @@ I0611 04:10:23.026207 1 grpc_server.cc:4062] Started GRPCInferenceService at 0.0
 I0611 04:10:23.036976 1 http_server.cc:2887] Started HTTPService at 0.0.0.0:8000
 I0611 04:10:23.080860 1 http_server.cc:2906] Started Metrics Service at 0.0.0.0:8002
 ```
-2. Start client image to start inferencing (shell):
+2. Start client image to start inferencing (shell), mount client src into container:
 ```
-$ sudo docker run -it --rm --net=host nvcr.io/nvidia/tritonserver:21.05-py3-sdk
+$ sudo docker run -it --rm --net=host -v /home/maverick911/repo/client:/workspace/client nvcr.io/nvidia/tritonserver:21.05-py3-sdk
 ```
 3. Infer, for ex:
 ```
-$ /workspace/install/bin/image_client -m densenet_onnx -c 3 -s INCEPTION /workspace/images/mug.jpg
+$ image_client -m densenet_onnx -c 3 -s INCEPTION /workspace/images/mug.jpg
 Request 0, batch size 1
 Image '/workspace/images/mug.jpg':
     15.349568 (504) = COFFEE MUG
     13.227468 (968) = CUP
     10.424895 (505) = COFFEEPOT
 ```
+## Example cmd list in sdk image:
+```
+$ python image_client.py -m inception_graphdef -s INCEPTION ./images/mug.jpg
+Request 1, batch size 1
+    0.826453 (505) = COFFEE MUG
+PASS
+$ python src/python/examples/image_client.py -i grpc -u localhost:8001 -m inception_graphdef -s INCEPTION ./images/mug.jpg
+$ python src/python/examples/image_client.py -i grpc -u localhost:8001 -c 4 -m inception_graphdef -s INCEPTION ./images/mug.jpg
+...
+```
+## Image Classification Example (use nvcr.io/nvidia/tritonserver:21.05-py3-sdk)
 
+The image classification example that uses the C++ client API is
+available at
+[src/c++/examples/image_client.cc](src/c%2B%2B/examples/image_client.cc). The
+Python version of the image classification client is available at
+[src/python/examples/image_client.py](src/python/examples/image_client.py).
+
+To use image_client (or image_client.py) you must first have a running
+Triton that is serving one or more image classification models. The
+image_client application requires that the model have a single image
+input and produce a single classification output. If you don't have a
+model repository with image classification models see
+[QuickStart](https://github.com/triton-inference-server/server/blob/master/docs/quickstart.md)
+for instructions on how to create one.
+
+Once Triton is running you can use the image_client application to
+send inference requests. You can specify a single image or a directory
+holding images. Here we send a request for the inception_graphdef
+model for an image from the
+[qa/images](https://github.com/triton-inference-server/server/tree/master/qa/images).
+
+```bash
+$ image_client -m inception_graphdef -s INCEPTION qa/images/mug.jpg
+Request 0, batch size 1
+Image 'qa/images/mug.jpg':
+    0.754130 (505) = COFFEE MUG
+```
+
+The Python version of the application accepts the same command-line
+arguments.
+
+```bash
+$ python image_client.py -m inception_graphdef -s INCEPTION qa/images/mug.jpg
+Request 0, batch size 1
+Image 'qa/images/mug.jpg':
+     0.826384 (505) = COFFEE MUG
+```
+
+The image_client and image_client.py applications use the client
+libraries to talk to Triton. By default image_client instructs the
+client library to use HTTP/REST protocol, but you can use the GRPC
+protocol by providing the -i flag. You must also use the -u flag to
+point at the GRPC endpoint on Triton.
+
+```bash
+$ image_client -i grpc -u localhost:8001 -m inception_graphdef -s INCEPTION qa/images/mug.jpg
+Request 0, batch size 1
+Image 'qa/images/mug.jpg':
+    0.754130 (505) = COFFEE MUG
+```
+
+By default the client prints the most probable classification for the
+image. Use the -c flag to see more classifications.
+
+```bash
+$ image_client -m inception_graphdef -s INCEPTION -c 3 qa/images/mug.jpg
+Request 0, batch size 1
+Image 'qa/images/mug.jpg':
+    0.754130 (505) = COFFEE MUG
+    0.157077 (969) = CUP
+    0.002880 (968) = ESPRESSO
+```
+
+The -b flag allows you to send a batch of images for inferencing.
+The image_client application will form the batch from the image or
+images that you specified. If the batch is bigger than the number of
+images then image_client will just repeat the images to fill the
+batch.
+
+```bash
+$ image_client -m inception_graphdef -s INCEPTION -c 3 -b 2 qa/images/mug.jpg
+Request 0, batch size 2
+Image 'qa/images/mug.jpg':
+    0.754130 (505) = COFFEE MUG
+    0.157077 (969) = CUP
+    0.002880 (968) = ESPRESSO
+Image 'qa/images/mug.jpg':
+    0.754130 (505) = COFFEE MUG
+    0.157077 (969) = CUP
+    0.002880 (968) = ESPRESSO
+```
+
+Provide a directory instead of a single image to perform inferencing
+on all images in the directory.
+
+```
+$ image_client -m inception_graphdef -s INCEPTION -c 3 -b 2 qa/images
+Request 0, batch size 2
+Image '/opt/tritonserver/qa/images/car.jpg':
+    0.819196 (818) = SPORTS CAR
+    0.033457 (437) = BEACH WAGON
+    0.031232 (480) = CAR WHEEL
+Image '/opt/tritonserver/qa/images/mug.jpg':
+    0.754130 (505) = COFFEE MUG
+    0.157077 (969) = CUP
+    0.002880 (968) = ESPRESSO
+Request 1, batch size 2
+Image '/opt/tritonserver/qa/images/vulture.jpeg':
+    0.977632 (24) = VULTURE
+    0.000613 (9) = HEN
+    0.000560 (137) = EUROPEAN GALLINULE
+Image '/opt/tritonserver/qa/images/car.jpg':
+    0.819196 (818) = SPORTS CAR
+    0.033457 (437) = BEACH WAGON
+    0.031232 (480) = CAR WHEEL
+```
 ## Note:
 Trained model which saved by torch.save (usually .pth) must be convert into torchscript by torch.jit.save (into model.pt as default name of Triton).
 Ex: git
