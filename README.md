@@ -27,10 +27,48 @@
 -->
 
 [![License](https://img.shields.io/badge/License-BSD3-lightgrey.svg)](https://opensource.org/licenses/BSD-3-Clause)
-# This repo was forked from Triton/Client to run demo example and do experiment
+# About this forked repo
+This repo was forked from https://github.com/triton-inference-server/client to run demo example and do further experiment
+Repo for experimenting NVIDIA Triton Inference server
 
+## Run image
+> sudo docker run --gpus=<num/all> --rm -p8000:8000 -p8001:8001 -p8002:8002 -v <(full-path-to)/model_repository>:/models nvcr.io/nvidia/tritonserver:21.05-py3 tritonserver --model-repository=/models
 
+## Ex: Run on vm with 'server' repo:
+1. Start the server side:
+```
+$ sudo docker run --gpus all --rm -p8000:8000 -p8001:8001 -p8002:8002 -v /home/maverick911/repo/server/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:21.05-py3 tritonserver --model-repository=/models
+```
+2. Start client image to start inferencing (shell):
+```
+$ sudo docker run -it --rm --net=host nvcr.io/nvidia/tritonserver:21.05-py3-sdk
+```
+3. Infer, for ex:
+```
+$ /workspace/install/bin/image_client -m densenet_onnx -c 3 -s INCEPTION /workspace/images/mug.jpg
+Request 0, batch size 1
+Image '/workspace/images/mug.jpg':
+    15.349568 (504) = COFFEE MUG
+    13.227468 (968) = CUP
+    10.424895 (505) = COFFEEPOT
+```
 
+## Note:
+Trained model which saved by torch.save (usually .pth) must be convert into torchscript by torch.jit.save (into model.pt as default name of Triton).
+Ex: git
+    # define model class...
+    model = model.to(device)
+    # Switch the model to eval model
+    model.eval()
+    # An example input you would normally provide to your model's forward() method.
+    x = torch.randn(1, 3, 768, 768).to(device)
+    # Use torch.jit.trace to generate a torch.jit.ScriptModule via tracing.
+    traced_script_module = torch.jit.trace(model, x)
+    # Save the TorchScript model
+    traced_script_module.save('model.pt')
+
+--------
+# ORIGINAL README
 ---------------------------------------
 # Triton Client Libraries and Examples
 
