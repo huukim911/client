@@ -36,8 +36,8 @@ Pull repo, image, and prepare models (Where <xx.yy> is the version of Triton tha
 ```
 $ sudo docker pull nvcr.io/nvidia/tritonserver:<xx.yy>-py3
 $ git clone https://github.com/triton-inference-server/server.git
-$ cd docs/examples
-$ ./fetch_models.sh
+$ cd server/docs/examples
+$ server/docs/examples/fetch_models.sh
 $ git clone https://github.com/huukim911/triton-inference-server_client.git
 ```
 ## Run the server and client to infer (with server repo):

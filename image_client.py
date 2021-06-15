@@ -345,7 +345,10 @@ if __name__ == '__main__':
 
     max_batch_size, input_name, output_name, c, h, w, format, dtype = parse_model(
         model_metadata, model_config)
-    print(0,max_batch_size, input_name, output_name, c, h, w, format, dtype)
+    print(0,'\n max_batch_size: ',max_batch_size, '\n input_name: ',input_name, '\n output_name: ',output_name, 
+            '\n c-h-w: ',c, h, w, 
+            '\n format: ',format, 
+            '\n dtype: ', dtype)
     filenames = []
     if os.path.isdir(FLAGS.image_filename):
         filenames = [
