@@ -286,7 +286,7 @@ if __name__ == '__main__':
                         '--url',
                         type=str,
                         required=False,
-                        default='localhost:8000',
+                        default='localhost:9000',
                         help='Inference server URL. Default is localhost:8000.')
     parser.add_argument('-i',
                         '--protocol',
