@@ -41,9 +41,34 @@ $ ./fetch_models.sh
 $ git clone https://github.com/huukim911/triton-inference-server_client.git
 ```
 ## Run the server and client to infer (with server repo):
+Run server in container and client in cmd
+```
+$ sudo docker run --gpus all --rm -p7000:8000 -p7001:8001 -p7002:8002 -v /home/maverick911/repo/server/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:21.05-py3 tritonserver --model-repository=/models
+
++----------------------+---------+--------+
+| Model                | Version | Status |
++----------------------+---------+--------+
+| densenet_onnx        | 1       | READY  |
+....
+I0611 04:10:23.026207 1 grpc_server.cc:4062] Started GRPCInferenceService at 0.0.0.0:8001
+I0611 04:10:23.036976 1 http_server.cc:2987] Started HTTPService at 0.0.0.0:8000
+I0611 04:10:23.080860 1 http_server.c9:2906] Started Metrics Service at 0.0.0.0:8002
+```
+2. Infer by client in cmd (this repo), for ex:
+```
+$ cd triton-inference-server_client
+$ python image_client.py -m inception_graphdef -c 3 -s INCEPTION qa/images/mug.jpg
+Request 1, batch size 1
+    0.826452 (505) = COFFEE MUG
+    0.124038 (969) = CUP
+    0.002276 (900) = WATER JUG
+PASS
+```
+-------
+Run server in container and client sdk in container:
 1. Start the server side:
 ```
-$ sudo docker run --gpus all --rm -p9000:9000 -p9001:9001 -p9002:9002 -v /home/maverick911/repo/server/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:21.05-py3 tritonserver --model-repository=/models
+$ sudo docker run --gpus all --rm -p7000:8000 -p7001:8001 -p7002:8002 -v /home/maverick911/repo/server/docs/examples/model_repository:/models nvcr.io/nvidia/tritonserver:21.05-py3 tritonserver --model-repository=/models
 
 +----------------------+---------+--------+
 | Model                | Version | Status |
@@ -54,9 +79,9 @@ I0611 04:10:23.026207 1 grpc_server.cc:4062] Started GRPCInferenceService at 0.0
 I0611 04:10:23.036976 1 http_server.cc:2987] Started HTTPService at 0.0.0.0:9000
 I0611 04:10:23.080860 1 http_server.c9:2906] Started Metrics Service at 0.0.0.0:9002
 ```
-2.9Start client image to start inferencing (shell), mount client src into container:
+2. Start client image to start inferencing (shell), mount client src into container:
 ```
-$ sudo docker run -it --rm --net=host -v /home/maverick911/repo/client:/workspace/client nvcr.io/nvidia/tritonserver:21.05-py3-sdk
+$ sudo docker run -it --rm --net=host -v /home/maverick911/repo/triton-inference-server_client/:/workspace/client nvcr.io/nvidia/tritonserver:21.05-py3-sdk
 ```
 3. Infer, for ex:
 ```

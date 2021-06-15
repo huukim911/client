@@ -187,6 +187,7 @@ def postprocess(results, output_name, batch_size, batching):
     """
 
     output_array = results.as_numpy(output_name)
+    print(output_array)
     if len(output_array) != batch_size:
         raise Exception("expected {} results, got {}".format(
             batch_size, len(output_array)))
@@ -286,7 +287,7 @@ if __name__ == '__main__':
                         '--url',
                         type=str,
                         required=False,
-                        default='localhost:9000',
+                        default='localhost:7000',
                         help='Inference server URL. Default is localhost:8000.')
     parser.add_argument('-i',
                         '--protocol',
@@ -344,7 +345,7 @@ if __name__ == '__main__':
 
     max_batch_size, input_name, output_name, c, h, w, format, dtype = parse_model(
         model_metadata, model_config)
-
+    print(0,max_batch_size, input_name, output_name, c, h, w, format, dtype)
     filenames = []
     if os.path.isdir(FLAGS.image_filename):
         filenames = [
