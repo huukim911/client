@@ -217,7 +217,7 @@ def requestGenerator(batched_image_data, input_name, output_name, dtype, FLAGS):
     inputs[0].set_data_from_numpy(batched_image_data)
 
     outputs = [
-        client.InferRequestedOutput(output_name, class_count=FLAGS.classes)
+        client.InferRequestedOutput(output_name)#, class_count=FLAGS.classes)
     ]
 
     yield inputs, outputs, FLAGS.model_name, FLAGS.model_version
